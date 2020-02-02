@@ -1,31 +1,20 @@
-import java.nio.charset.Charset;
-import java.util.*;
-import java.io.File;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.storm.shade.com.google.common.io.Files;
-import org.apache.storm.tuple.Fields;
-import org.apache.storm.tuple.Values;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
+import org.apache.storm.shade.com.google.common.io.Files;
 import org.apache.storm.topology.TopologyBuilder;
+import org.apache.storm.tuple.Fields;
 
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.HTableDescriptor;
+import java.io.File;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.List;
 
-import org.apache.hadoop.conf.Configuration;
-
-//TODO: Do not push the credentials to Github
-//TODO: For example read credentials from a txt file
-
-//TODO: Install and configure HBase (possibly also Hadoop)
 //TODO: Learn how HBase mapper works
-//TODO: Insert dummy data to table and try to read it
+//TODO: Find a way to add tweets to tables correctly and efficiently
 
 public class TwitterHashtagStorm {
     public static void main(String[] args) throws Exception{
@@ -43,6 +32,41 @@ public class TwitterHashtagStorm {
 
         Config config = new Config();
         config.setDebug(true);
+
+        //HBase tables creation
+        Configuration conf = HBaseConfiguration.create();
+        Connection connection = ConnectionFactory.createConnection(conf);
+        Admin admin = connection.getAdmin();
+
+        if(admin.tableExists(TableName.valueOf("tweet_master_database"))){
+            admin.disableTable(TableName.valueOf("tweet_master_database"));
+            admin.deleteTable(TableName.valueOf("tweet_master_database"));
+        }
+        TableDescriptor tweetMasterDatabase = TableDescriptorBuilder.newBuilder(TableName.valueOf("tweet_master_database"))
+                                .setColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder("content".getBytes()).build())
+                                .setColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder("info".getBytes()).build())
+                                .build();
+        admin.createTable(tweetMasterDatabase);
+
+        if(admin.tableExists(TableName.valueOf("tweet_batch_view"))){
+            admin.disableTable(TableName.valueOf("tweet_batch_view"));
+            admin.deleteTable(TableName.valueOf("tweet_batch_view"));
+        }
+        TableDescriptor tweetBatchView = TableDescriptorBuilder.newBuilder(TableName.valueOf("tweet_batch_view"))
+                .setColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder("sentiment_count".getBytes()).build())
+                .build();
+        admin.createTable(tweetBatchView);
+
+
+        if(admin.tableExists(TableName.valueOf("tweet_realtime_view"))){
+            admin.disableTable(TableName.valueOf("tweet_realtime_view"));
+            admin.deleteTable(TableName.valueOf("tweet_realtime_view"));
+        }
+        TableDescriptor tweetRealtimeView = TableDescriptorBuilder.newBuilder(TableName.valueOf("tweet_realtime_view"))
+                .setColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder("sentiment_count".getBytes()).build())
+                .build();
+        admin.createTable(tweetRealtimeView);
+
 
         TopologyBuilder builder = new TopologyBuilder();
         builder.setSpout("twitter-spout", new TweetStreamSpout(consumerKey,
