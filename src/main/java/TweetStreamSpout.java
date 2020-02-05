@@ -79,9 +79,10 @@ public class TweetStreamSpout extends BaseRichSpout{
             Utils.sleep(50);
         }
         else {
-            collector.emit(new Values(tweet));
+            if(tweet.getLang().equals("en")){
+                collector.emit(new Values(tweet));
+            }
         }
-
     }
 
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer){
