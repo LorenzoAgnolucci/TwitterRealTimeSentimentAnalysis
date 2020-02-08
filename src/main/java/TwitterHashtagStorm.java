@@ -2,6 +2,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
+
 import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
 import org.apache.storm.shade.com.google.common.io.Files;
@@ -28,7 +29,7 @@ public class TwitterHashtagStorm {
 
         //Read keywords as an argument
         String[] arguments = args.clone();
-        String[] keyWords = Arrays.copyOfRange(arguments, 0, arguments.length);
+        String[] keywords = Arrays.copyOfRange(arguments, 0, arguments.length);
 
         Config config = new Config();
         config.setDebug(true);
@@ -38,39 +39,38 @@ public class TwitterHashtagStorm {
         Connection connection = ConnectionFactory.createConnection(conf);
         Admin admin = connection.getAdmin();
 
-        if(admin.tableExists(TableName.valueOf("tweet_master_database"))){
-            admin.disableTable(TableName.valueOf("tweet_master_database"));
-            admin.deleteTable(TableName.valueOf("tweet_master_database"));
+        if(!admin.tableExists(TableName.valueOf("tweet_master_database"))){
+            TableDescriptor tweetMasterDatabase = TableDescriptorBuilder.newBuilder(TableName.valueOf("tweet_master_database"))
+                    .setColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder("content".getBytes()).build())
+                    .build();
+            admin.createTable(tweetMasterDatabase);
         }
-        TableDescriptor tweetMasterDatabase = TableDescriptorBuilder.newBuilder(TableName.valueOf("tweet_master_database"))
-                                .setColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder("content".getBytes()).build())
-                                .setColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder("info".getBytes()).build())
-                                .build();
-        admin.createTable(tweetMasterDatabase);
 
-        if(admin.tableExists(TableName.valueOf("tweet_batch_view"))){
-            admin.disableTable(TableName.valueOf("tweet_batch_view"));
-            admin.deleteTable(TableName.valueOf("tweet_batch_view"));
+
+        if(!admin.tableExists(TableName.valueOf("tweet_batch_view"))){
+            TableDescriptor tweetBatchView = TableDescriptorBuilder.newBuilder(TableName.valueOf("tweet_batch_view"))
+                    .setColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder("sentiment_count".getBytes()).build())
+                    .build();
+            admin.createTable(tweetBatchView);
         }
-        TableDescriptor tweetBatchView = TableDescriptorBuilder.newBuilder(TableName.valueOf("tweet_batch_view"))
-                .setColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder("sentiment_count".getBytes()).build())
-                .build();
-        admin.createTable(tweetBatchView);
 
 
-        if(admin.tableExists(TableName.valueOf("tweet_realtime_view"))){
-            admin.disableTable(TableName.valueOf("tweet_realtime_view"));
-            admin.deleteTable(TableName.valueOf("tweet_realtime_view"));
+        if(!admin.tableExists(TableName.valueOf("tweet_realtime_view"))){
+            TableDescriptor tweetRealtimeView = TableDescriptorBuilder.newBuilder(TableName.valueOf("tweet_realtime_view"))
+                    .setColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder("sentiment_count".getBytes()).build())
+                    .build();
+            admin.createTable(tweetRealtimeView);
         }
-        TableDescriptor tweetRealtimeView = TableDescriptorBuilder.newBuilder(TableName.valueOf("tweet_realtime_view"))
-                .setColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder("sentiment_count".getBytes()).build())
-                .build();
-        admin.createTable(tweetRealtimeView);
-
 
         TopologyBuilder builder = new TopologyBuilder();
         builder.setSpout("twitter-spout", new TweetStreamSpout(consumerKey,
-                consumerSecret, accessToken, accessTokenSecret, keyWords));
+                consumerSecret, accessToken, accessTokenSecret, keywords));
+
+        builder.setBolt("twitter-parser-bolt", new TweetParserBolt(keywords))
+                .shuffleGrouping("twitter-spout");
+
+        builder.setBolt("twitter-database-mapper-bolt", new TweetDatabaseMapperBolt("tweet_master_database"))
+                .shuffleGrouping("twitter-parser-bolt");
 
         builder.setBolt("twitter-hashtag-reader-bolt", new HashtagReaderBolt())
                 .shuffleGrouping("twitter-spout");
@@ -81,7 +81,7 @@ public class TwitterHashtagStorm {
         LocalCluster cluster = new LocalCluster();
         cluster.submitTopology("TwitterHashtagStorm", config,
                 builder.createTopology());
-        Thread.sleep(50000);
+        Thread.sleep(100000);
         cluster.shutdown();
     }
 }
