@@ -51,7 +51,7 @@ public class TweetDatabaseMapperBolt extends BaseRichBolt{
         ArrayList<String> keywords = (ArrayList<String>) tuple.getValueByField("keywords");
         Put newRow = new Put(Bytes.toBytes(tweetID));
         newRow.addColumn(Bytes.toBytes("content"), Bytes.toBytes("text"), Bytes.toBytes(text));
-        newRow.addColumn(Bytes.toBytes("info"), Bytes.toBytes("keywords"), WritableUtils.toByteArray(Utils.toWritable(keywords)));
+        newRow.addColumn(Bytes.toBytes("content"), Bytes.toBytes("keywords"), WritableUtils.toByteArray(Utils.toWritable(keywords)));
         try{
             table.put(newRow);
         }catch(IOException e){
