@@ -7,17 +7,14 @@ import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
 import org.apache.storm.shade.com.google.common.io.Files;
 import org.apache.storm.topology.TopologyBuilder;
-import org.apache.storm.tuple.Fields;
 
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 
-//TODO: Learn how HBase mapper works
-//TODO: Find a way to add tweets to tables correctly and efficiently
 
-public class TwitterHashtagStorm {
+public class TwitterSentimentAnalysisTopology{
     public static void main(String[] args) throws Exception{
 
         // Read Twitter API credentials from txt file
@@ -69,19 +66,19 @@ public class TwitterHashtagStorm {
         builder.setBolt("twitter-parser-bolt", new TweetParserBolt(keywords))
                 .shuffleGrouping("twitter-spout");
 
-        builder.setBolt("twitter-database-mapper-bolt", new TweetDatabaseMapperBolt("tweet_master_database"))
+        builder.setBolt("twitter-master-database-mapper-bolt", new TweetMasterDatabaseMapperBolt("tweet_master_database"))
                 .shuffleGrouping("twitter-parser-bolt");
 
-        builder.setBolt("twitter-hashtag-reader-bolt", new HashtagReaderBolt())
-                .shuffleGrouping("twitter-spout");
+        builder.setBolt("twitter-sentiment-classifier-bolt", new TweetSentimentClassifierBolt("SentimentClassifierTrainedModel.model"))
+                .shuffleGrouping("twitter-parser-bolt");
 
-        builder.setBolt("twitter-hashtag-counter-bolt", new HashtagCounterBolt())
-                .fieldsGrouping("twitter-hashtag-reader-bolt", new Fields("hashtag"));
+        builder.setBolt("twitter-realtime-view-mapper-bolt", new TweetRealTimeViewMapperBolt("tweet_realtime_view"))
+                .shuffleGrouping("twitter-sentiment-classifier-bolt");
 
         LocalCluster cluster = new LocalCluster();
         cluster.submitTopology("TwitterHashtagStorm", config,
                 builder.createTopology());
-        Thread.sleep(100000);
+        Thread.sleep(600000);
         cluster.shutdown();
     }
 }
