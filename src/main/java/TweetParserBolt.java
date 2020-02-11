@@ -1,3 +1,5 @@
+import jodd.util.StringUtil;
+import org.apache.hadoop.util.StringUtils;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -30,11 +32,13 @@ public class TweetParserBolt extends BaseRichBolt{
         Status tweet = (Status) tuple.getValueByField("tweet");
         ArrayList<String> tweetKeywords = new ArrayList<String>();
         for(String keyword : keywords){
-            if(tweet.getText().contains(keyword)){
+            if(tweet.getText().contains(keyword) || tweet.getText().contains(StringUtil.uncapitalize(keyword))){
                 tweetKeywords.add(keyword);
             }
         }
-        collector.emit(new Values(tweet.getId(), tweet.getText(), tweetKeywords));
+        if(tweetKeywords.size() > 0){
+            collector.emit(new Values(String.valueOf(tweet.getId()), tweet.getText(), tweetKeywords));
+        }
     }
 
     @Override
