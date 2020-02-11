@@ -88,19 +88,27 @@ public class SentimentClassifier{
     }
 
     public void storeModel(String fileName) throws IOException {
-        System.out.println("Storing trained model in " + fileName);
         FileOutputStream fileOutputStream = new FileOutputStream(fileName);
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
         trainingClassifier.compileTo(objectOutputStream);
+        objectOutputStream.close();
     }
 
+    public String classify(String tweet) {
+        return trainedClassifier.classify(tweet).bestCategory();
+    }
 
     public static void main(String[] args) throws Exception{
         File modelFile = new File(MODEL_FILE);
-        SentimentClassifier classifier = new SentimentClassifier(modelFile);
-        //classifier.train(TRAINING_FILE);
-        //classifier.storeModel(OUTPUT_FILE);
-        classifier.evaluate(TEST_FILE);
-        //classifier.storeModel(OUTPUT_FILE);
+        if(modelFile.exists()){
+            SentimentClassifier classifier = new SentimentClassifier(modelFile);
+            classifier.evaluate(TEST_FILE);
+        }
+        else{
+            SentimentClassifier classifier = new SentimentClassifier();
+            classifier.train(TRAINING_FILE);
+            classifier.storeModel(MODEL_FILE);
+            System.out.println("Stored trained model in " + MODEL_FILE);
+        }
     }
 }
