@@ -6,6 +6,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.Text;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 
 public class HadoopReducer extends TableReducer<Text, Text, ImmutableBytesWritable>{
@@ -21,7 +22,7 @@ public class HadoopReducer extends TableReducer<Text, Text, ImmutableBytesWritab
                 negativeCount++;
             }
         }
-        Put newRow = new Put(key.getBytes());
+        Put newRow = new Put(Bytes.toBytes(key.toString()));
         newRow.addColumn(Bytes.toBytes("sentiment_count"), Bytes.toBytes("positive"), Bytes.toBytes(Integer.toString(positiveCount)));
         newRow.addColumn(Bytes.toBytes("sentiment_count"), Bytes.toBytes("negative"), Bytes.toBytes(Integer.toString(negativeCount)));
         context.write(null, newRow);
