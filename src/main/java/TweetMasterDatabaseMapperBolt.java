@@ -11,29 +11,25 @@ import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichBolt;
-import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
-import org.apache.storm.tuple.Values;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class TweetDatabaseMapperBolt extends BaseRichBolt{
+public class TweetMasterDatabaseMapperBolt extends BaseRichBolt{
 
-    private OutputCollector collector;
     private String tableName;
     private Table table;
 
 
-    public TweetDatabaseMapperBolt(String tableName){
+    public TweetMasterDatabaseMapperBolt(String tableName){
         this.tableName = tableName;
 
     }
 
     @Override
     public void prepare(Map<String, Object> map, TopologyContext topologyContext, OutputCollector outputCollector){
-        this.collector = outputCollector;
         try{
             Configuration conf = HBaseConfiguration.create();
             Connection connection = ConnectionFactory.createConnection(conf);
@@ -46,7 +42,7 @@ public class TweetDatabaseMapperBolt extends BaseRichBolt{
     @Override
     @SuppressWarnings("unchecked")
     public void execute(Tuple tuple){
-        Long tweetID = (Long) tuple.getValueByField("tweet_ID");
+        String tweetID = (String) tuple.getValueByField("tweet_ID");
         String text = (String) tuple.getValueByField("text");
         ArrayList<String> keywords = (ArrayList<String>) tuple.getValueByField("keywords");
         Put newRow = new Put(Bytes.toBytes(tweetID));
@@ -57,11 +53,8 @@ public class TweetDatabaseMapperBolt extends BaseRichBolt{
         }catch(IOException e){
             e.printStackTrace();
         }
-        collector.emit(new Values(tweetID));
     }
 
     @Override
-    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer){
-        outputFieldsDeclarer.declare(new Fields("row_key"));
-    }
+    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer){}
 }
