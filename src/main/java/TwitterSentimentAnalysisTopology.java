@@ -3,6 +3,7 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
 import org.apache.storm.shade.com.google.common.io.Files;
@@ -52,14 +53,28 @@ public class TwitterSentimentAnalysisTopology{
         }
 
 
-        if(!admin.tableExists(TableName.valueOf("tweet_realtime_view"))){
-            TableDescriptor tweetRealtimeView = TableDescriptorBuilder.newBuilder(TableName.valueOf("tweet_realtime_view"))
-                    .setColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder("sentiment_count".getBytes()).build())
+        if(!admin.tableExists(TableName.valueOf("synchronization_table"))){
+            TableDescriptor tweetRealtimeView = TableDescriptorBuilder.newBuilder(TableName.valueOf("synchronization_table"))
+                    .setColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder("placeholder".getBytes()).build())
+                    .build();
+            admin.createTable(tweetRealtimeView);
+            Table table = connection.getTable(TableName.valueOf("synchronization_table"));
+            table.put(new Put(Bytes.toBytes("MapReduce_start_timestamp"), 0)
+                    .addColumn(Bytes.toBytes("placeholder"), Bytes.toBytes(""), Bytes.toBytes("")));
+            table.put(new Put(Bytes.toBytes("MapReduce_end_timestamp"), 0)
+                    .addColumn(Bytes.toBytes("placeholder"), Bytes.toBytes(""), Bytes.toBytes("")));
+        }
+
+
+        if(!admin.tableExists(TableName.valueOf("tweet_realtime_database"))){
+            TableDescriptor tweetRealtimeView = TableDescriptorBuilder.newBuilder(TableName.valueOf("tweet_realtime_database"))
+                    .setColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder("content".getBytes()).build())
                     .build();
             admin.createTable(tweetRealtimeView);
         }
 
         TopologyBuilder builder = new TopologyBuilder();
+
         builder.setSpout("twitter-spout", new TweetStreamSpout(consumerKey,
                 consumerSecret, accessToken, accessTokenSecret, keywords));
 
@@ -72,8 +87,14 @@ public class TwitterSentimentAnalysisTopology{
         builder.setBolt("twitter-sentiment-classifier-bolt", new TweetSentimentClassifierBolt("SentimentClassifierTrainedModel.model"))
                 .shuffleGrouping("twitter-parser-bolt");
 
-        builder.setBolt("twitter-realtime-view-mapper-bolt", new TweetRealTimeViewMapperBolt("tweet_realtime_view"))
+        builder.setBolt("twitter-realtime-database-mapper-bolt", new RealTimeDatabaseMapperBolt("tweet_realtime_database"))
                 .shuffleGrouping("twitter-sentiment-classifier-bolt");
+
+
+        builder.setSpout("synchronization-spout", new SynchronizationSpout("synchronization_table"));
+
+        builder.setBolt("synchronization-bolt", new SynchronizationBolt("tweet_realtime_database"))
+                .shuffleGrouping("synchronization-spout");
 
         LocalCluster cluster = new LocalCluster();
         cluster.submitTopology("TwitterHashtagStorm", config,
