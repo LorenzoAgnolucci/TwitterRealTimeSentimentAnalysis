@@ -27,15 +27,12 @@ public class TweetSentimentClassifierBolt extends BaseRichBolt{
         File modelFile = new File(classifierModelPath);
         try{
             classifier = new SentimentClassifier(modelFile);
-        }catch(IOException e){
-            e.printStackTrace();
-        }catch(ClassNotFoundException e){
+        }catch(IOException | ClassNotFoundException e){
             e.printStackTrace();
         }
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void execute(Tuple tuple){
         String text = (String) tuple.getValueByField("text");
         ArrayList<String> keywords = (ArrayList<String>) tuple.getValueByField("keywords");
