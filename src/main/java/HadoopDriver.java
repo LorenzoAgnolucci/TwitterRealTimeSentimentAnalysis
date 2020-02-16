@@ -1,6 +1,8 @@
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.Text;
@@ -31,10 +33,21 @@ public class HadoopDriver extends Configured implements Tool{
 
         job.setJarByClass(HadoopDriver.class);
 
+        Connection connection = ConnectionFactory.createConnection(HBaseConfiguration.create());
+        Table table = connection.getTable(TableName.valueOf("synchronization_table"));
+
         TableMapReduceUtil.initTableMapperJob("tweet_master_database", scan, HadoopMapper.class, Text.class, Text.class, job);
         TableMapReduceUtil.initTableReducerJob("tweet_batch_view", HadoopReducer.class, job);
 
-        return job.waitForCompletion(true) ? 0 : 1;
+        table.put(new Put(Bytes.toBytes("MapReduce_start_timestamp"))
+                .addColumn(Bytes.toBytes("placeholder"), Bytes.toBytes(""), Bytes.toBytes("")));
+
+        int returnValue = job.waitForCompletion(true) ? 0 : 1;
+
+        table.put(new Put(Bytes.toBytes("MapReduce_end_timestamp"))
+                .addColumn(Bytes.toBytes("placeholder"), Bytes.toBytes(""), Bytes.toBytes("")));
+
+        return returnValue;
     }
 
 
