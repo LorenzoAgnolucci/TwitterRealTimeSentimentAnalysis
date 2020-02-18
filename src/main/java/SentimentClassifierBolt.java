@@ -11,13 +11,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class TweetSentimentClassifierBolt extends BaseRichBolt{
+public class SentimentClassifierBolt extends BaseRichBolt{
 
     private OutputCollector collector;
     private String classifierModelPath;
     private SentimentClassifier classifier;
 
-    public TweetSentimentClassifierBolt(String classifierModelPath){
+    public SentimentClassifierBolt(String classifierModelPath){
         this.classifierModelPath = classifierModelPath;
     }
 

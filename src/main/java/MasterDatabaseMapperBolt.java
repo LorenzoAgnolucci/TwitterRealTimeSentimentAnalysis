@@ -17,13 +17,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class TweetMasterDatabaseMapperBolt extends BaseRichBolt{
+public class MasterDatabaseMapperBolt extends BaseRichBolt{
 
     private String tableName;
     private Table table;
 
 
-    public TweetMasterDatabaseMapperBolt(String tableName){
+    public MasterDatabaseMapperBolt(String tableName){
         this.tableName = tableName;
 
     }
@@ -40,7 +40,6 @@ public class TweetMasterDatabaseMapperBolt extends BaseRichBolt{
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void execute(Tuple tuple){
         String tweetID = (String) tuple.getValueByField("tweet_ID");
         String text = (String) tuple.getValueByField("text");
