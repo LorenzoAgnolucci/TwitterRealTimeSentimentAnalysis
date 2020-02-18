@@ -75,17 +75,19 @@ public class TwitterSentimentAnalysisTopology{
 
         TopologyBuilder builder = new TopologyBuilder();
 
-        builder.setSpout("twitter-spout", new TweetStreamSpout(consumerKey,
+        builder.setSpout("twitter-stream-spout", new TweetStreamSpout(consumerKey,
                 consumerSecret, accessToken, accessTokenSecret, keywords));
 
         builder.setBolt("twitter-parser-bolt", new TweetParserBolt(keywords))
-                .shuffleGrouping("twitter-spout");
+                .shuffleGrouping("twitter-stream-spout");
+        
+        builder.setSpout("twitter-csv-spout", new TweetCSVSpout());
 
-        builder.setBolt("twitter-master-database-mapper-bolt", new TweetMasterDatabaseMapperBolt("tweet_master_database"))
-                .shuffleGrouping("twitter-parser-bolt");
+        builder.setBolt("twitter-master-database-mapper-bolt", new MasterDatabaseMapperBolt("tweet_master_database"))
+                .shuffleGrouping("twitter-parser-bolt").shuffleGrouping("twitter-csv-spout");
 
-        builder.setBolt("twitter-sentiment-classifier-bolt", new TweetSentimentClassifierBolt("SentimentClassifierTrainedModel.model"))
-                .shuffleGrouping("twitter-parser-bolt");
+        builder.setBolt("twitter-sentiment-classifier-bolt", new SentimentClassifierBolt("SentimentClassifierTrainedModel.model"))
+                .shuffleGrouping("twitter-parser-bolt").shuffleGrouping("twitter-csv-spout");
 
         builder.setBolt("twitter-realtime-database-mapper-bolt", new RealTimeDatabaseMapperBolt("tweet_realtime_database"))
                 .shuffleGrouping("twitter-sentiment-classifier-bolt");
@@ -99,7 +101,7 @@ public class TwitterSentimentAnalysisTopology{
         LocalCluster cluster = new LocalCluster();
         cluster.submitTopology("TwitterHashtagStorm", config,
                 builder.createTopology());
-        Thread.sleep(600000);
+        Thread.sleep(1200000);
         cluster.shutdown();
     }
 }
