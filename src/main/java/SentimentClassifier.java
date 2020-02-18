@@ -1,3 +1,4 @@
+import au.com.bytecode.opencsv.CSVReader;
 import com.aliasi.classify.LMClassifier;
 import com.aliasi.lm.LanguageModel;
 import com.aliasi.lm.NGramProcessLM;
@@ -10,17 +11,17 @@ import com.aliasi.stats.MultivariateDistribution;
 import com.aliasi.util.AbstractExternalizable;
 import com.aliasi.util.CommaSeparatedValues;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 
 public class SentimentClassifier{
 
     public static final String TRAINING_FILE = "datasets/sentiment140/training.1600000.processed.noemoticon.csv";
-    //public static final String TEST_FILE = "datasets/Sentiment-Analysis-Dataset/Sentiment Analysis Dataset.csv";
-    public static final String TEST_FILE = "datasets/dummy_dataset.csv";
+    public static final String TEST_FILE = "datasets/twitter-sentiment-dataset-master/full-corpus.csv";
     public static final String MODEL_FILE = "SentimentClassifierTrainedModel.model";
 
 
@@ -32,7 +33,6 @@ public class SentimentClassifier{
         trainingClassifier = DynamicLMClassifier.createNGramProcess(new String[]{"1", "0"}, 8);
     }
 
-    @SuppressWarnings("unchecked")
     SentimentClassifier(File modelFile) throws IOException, ClassNotFoundException{
         trainedClassifier = (LMClassifier<LanguageModel, MultivariateDistribution>) AbstractExternalizable.readObject(modelFile);
     }
@@ -64,19 +64,29 @@ public class SentimentClassifier{
     void evaluate(String fileName) throws IOException {
         System.out.println("\nEvaluating classifier");
 
-        File file = new File(fileName);
-        CommaSeparatedValues csv = new CommaSeparatedValues(file, "UTF-8");
-        String[][] rows = csv.getArray();
-
+        List<List<String>> records = new ArrayList<>();
+        try (CSVReader csvReader = new CSVReader(new FileReader(TEST_FILE));) {
+            String[] values;
+            while ((values = csvReader.readNext()) != null) {
+                records.add(Arrays.asList(values));
+            }
+        }
+        records.remove(0);
         int numTests = 0;
         int numCorrect = 0;
-        for(String[] row: rows){
-            if(row.length != 4){
+        for(List<String> row: records){
+            if(row.get(1).equals("irrelevant") || row.get(1).equals("neutral")){
                 continue;
             }
             numTests++;
-            String text = row[3];
-            String sentiment = row[1];
+            String text = row.get(4);
+            String sentiment = row.get(1);
+            if(sentiment.equals("positive")){
+                sentiment = "1";
+            }
+            else{
+                sentiment = "0";
+            }
 
             Classification classification = trainedClassifier.classify(text);
             if (classification.bestCategory().equals(sentiment))
