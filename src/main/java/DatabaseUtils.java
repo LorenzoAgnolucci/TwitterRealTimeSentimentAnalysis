@@ -4,7 +4,7 @@ import org.apache.hadoop.io.Writable;
 
 import java.util.ArrayList;
 
-public class Utils{
+public class DatabaseUtils{
     public static Writable toWritable(ArrayList<String> list) {
         Writable[] content = new Writable[list.size()];
         for (int i = 0; i < content.length; i++) {

@@ -34,7 +34,7 @@ public class HadoopMapper extends TableMapper<Text, Text>{
         byte[] byteKeywords = value.getValue(Bytes.toBytes("content"), Bytes.toBytes("keywords"));
         ArrayWritable writable = new ArrayWritable(Text.class);
         writable.readFields(new DataInputStream(new ByteArrayInputStream(byteKeywords)));
-        ArrayList<String> keywords = Utils.fromWritable(writable);
+        ArrayList<String> keywords = DatabaseUtils.fromWritable(writable);
 
         String sentiment = classifier.classify(text);
         for(String keyword: keywords){
