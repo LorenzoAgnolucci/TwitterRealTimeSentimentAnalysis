@@ -22,6 +22,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.ResourceBundle;
 
 public class PresentationLayerController implements Initializable{
@@ -162,6 +164,14 @@ public class PresentationLayerController implements Initializable{
 
             resultList.add(new String[]{rowKey, positiveCount, negativeCount});
         }
+
+        resultList.sort(new Comparator<String[]>(){
+            @Override
+            public int compare(String[] firstString, String[] secondString){
+                return firstString[0].compareTo(secondString[0]);
+            }
+        });
+
         return resultList;
     }
 
@@ -204,6 +214,14 @@ public class PresentationLayerController implements Initializable{
         for(int i = 0; i < keywords.size(); i++){
             resultList.add(new String[]{keywords.get(i), positiveCount.get(i).toString(), negativeCount.get(i).toString()});
         }
+
+        resultList.sort(new Comparator<String[]>(){
+            @Override
+            public int compare(String[] firstString, String[] secondString){
+                return firstString[0].compareTo(secondString[0]);
+            }
+        });
+
         return resultList;
     }
 
@@ -211,6 +229,7 @@ public class PresentationLayerController implements Initializable{
         ArrayList<String[]> chartSeries = new ArrayList<>();
         ArrayList<String[]> batchResults = parseBatchResultsList(batchTable);
         ArrayList<String[]> realTimeResults = parseRealTimeResultsList(realTimeTable);
+
         for(String[] batchRow: batchResults){
             int positiveCount = Integer.parseInt(batchRow[1]);
             int negativeCount = Integer.parseInt(batchRow[2]);
@@ -222,17 +241,26 @@ public class PresentationLayerController implements Initializable{
             }
             chartSeries.add(new String[]{batchRow[0], String.valueOf(positiveCount), String.valueOf(negativeCount)});
         }
-        if(realTimeResults.size() > chartSeries.size()){
-            for(String[] realTimeRow : realTimeResults){
-                boolean found = false;
-                for(String[] chartRow: chartSeries){
-                    found = realTimeRow[0].equals(chartRow[0]);
-                }
-                if(!found){
-                    chartSeries.add(realTimeRow);
+
+        for(String[] realTimeRow : realTimeResults){
+            boolean found = false;
+            for(String[] chartRow : chartSeries){
+                found = realTimeRow[0].equals(chartRow[0]);
+                if(found){
+                    break;
                 }
             }
+            if(!found){
+                chartSeries.add(realTimeRow);
+            }
         }
+
+        chartSeries.sort(new Comparator<String[]>(){
+            @Override
+            public int compare(String[] firstString, String[] secondString){
+                return firstString[0].compareTo(secondString[0]);
+            }
+        });
         return chartSeries;
     }
 }
