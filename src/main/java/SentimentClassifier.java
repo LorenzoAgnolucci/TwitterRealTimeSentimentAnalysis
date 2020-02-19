@@ -1,12 +1,11 @@
 import au.com.bytecode.opencsv.CSVReader;
-import com.aliasi.classify.LMClassifier;
-import com.aliasi.lm.LanguageModel;
-import com.aliasi.lm.NGramProcessLM;
 
 import com.aliasi.classify.Classification;
 import com.aliasi.classify.Classified;
 import com.aliasi.classify.DynamicLMClassifier;
-
+import com.aliasi.classify.LMClassifier;
+import com.aliasi.lm.LanguageModel;
+import com.aliasi.lm.NGramProcessLM;
 import com.aliasi.stats.MultivariateDistribution;
 import com.aliasi.util.AbstractExternalizable;
 import com.aliasi.util.CommaSeparatedValues;
@@ -14,7 +13,6 @@ import com.aliasi.util.CommaSeparatedValues;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 

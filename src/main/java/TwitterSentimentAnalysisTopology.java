@@ -2,8 +2,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
-
 import org.apache.hadoop.hbase.util.Bytes;
+
 import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
 import org.apache.storm.shade.com.google.common.io.Files;
@@ -83,13 +83,13 @@ public class TwitterSentimentAnalysisTopology{
         
         builder.setSpout("twitter-csv-spout", new TweetCSVSpout());
 
-        builder.setBolt("twitter-master-database-mapper-bolt", new MasterDatabaseMapperBolt("tweet_master_database"))
+        builder.setBolt("master-database-mapper-bolt", new MasterDatabaseMapperBolt("tweet_master_database"))
                 .shuffleGrouping("twitter-parser-bolt").shuffleGrouping("twitter-csv-spout");
 
         builder.setBolt("twitter-sentiment-classifier-bolt", new SentimentClassifierBolt("SentimentClassifierTrainedModel.model"))
                 .shuffleGrouping("twitter-parser-bolt").shuffleGrouping("twitter-csv-spout");
 
-        builder.setBolt("twitter-realtime-database-mapper-bolt", new RealTimeDatabaseMapperBolt("tweet_realtime_database"))
+        builder.setBolt("realtime-database-mapper-bolt", new RealTimeDatabaseMapperBolt("tweet_realtime_database"))
                 .shuffleGrouping("twitter-sentiment-classifier-bolt");
 
 

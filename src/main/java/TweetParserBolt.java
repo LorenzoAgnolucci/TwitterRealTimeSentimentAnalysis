@@ -4,8 +4,8 @@ import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichBolt;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
-
 import org.apache.storm.tuple.Values;
+
 import twitter4j.Status;
 
 import java.util.ArrayList;

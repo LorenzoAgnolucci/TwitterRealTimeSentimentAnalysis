@@ -1,9 +1,9 @@
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.hbase.mapreduce.TableMapper;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
