@@ -20,6 +20,7 @@ For more information, read the [paper](paper_lambda_architecture_PC.pdf) located
 * [Apache Hadoop 3.2.1](https://hadoop.apache.org)
 * [Apache HBase 2.2.3](https://hbase.apache.org)
 * [Apache Storm 2.1.0](https://storm.apache.org)
+* [JavaFX](https://openjfx.io/)
 * [LingPipe 4.1.0](http://alias-i.com/lingpipe)
 * [Twitter4J](http://twitter4j.org/en/)
 
