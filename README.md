@@ -1,6 +1,4 @@
 # Lambda Architecture for Twitter Real-time sentiment analysis
-Lambda Architecture implementation using Apache Storm, Hadoop and HBase to perform Twitter real-time sentinent analysis
-
 ## Table of Contents
 
 * [About the Project](#about-the-project)
