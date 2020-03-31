@@ -24,25 +24,49 @@ public class HadoopDriver extends Configured implements Tool{
         BasicConfigurator.configure();
         Configuration conf = new Configuration();
 
+
         Scan scan = new Scan();
         scan.addFamily(Bytes.toBytes("content"));
 
+        Connection connection = ConnectionFactory.createConnection(HBaseConfiguration.create());
+        Table table = connection.getTable(TableName.valueOf("synchronization_table"));
+
+        table.put(new Put(Bytes.toBytes("MapReduce_start_timestamp"))
+                .addColumn(Bytes.toBytes("placeholder"), Bytes.toBytes(""), Bytes.toBytes("")));
+
+        long start = System.currentTimeMillis();
+        conf.setLong("start", start);
+
         Job job = Job.getInstance(conf, "BatchTwitterSentimentAnalysis");
+
+
+
+
+
+
 
         job.addCacheFile(new URI(CLASSIFIER_MODEL));
 
         job.setJarByClass(HadoopDriver.class);
 
-        Connection connection = ConnectionFactory.createConnection(HBaseConfiguration.create());
-        Table table = connection.getTable(TableName.valueOf("synchronization_table"));
+
 
         TableMapReduceUtil.initTableMapperJob("tweet_master_database", scan, HadoopMapper.class, Text.class, Text.class, job);
         TableMapReduceUtil.initTableReducerJob("tweet_batch_view", HadoopReducer.class, job);
 
-        table.put(new Put(Bytes.toBytes("MapReduce_start_timestamp"))
-                .addColumn(Bytes.toBytes("placeholder"), Bytes.toBytes(""), Bytes.toBytes("")));
+
+
+
+        System.out.println("\n\nStart: " + start + "\n\n");
 
         int returnValue = job.waitForCompletion(true) ? 0 : 1;
+
+        long end = System.currentTimeMillis();
+
+        System.out.println("\n\nEnd: " + end);
+        long elapsed = end - start;
+        System.out.println("\n\nElapsed: " + elapsed);
+
 
         table.put(new Put(Bytes.toBytes("MapReduce_end_timestamp"))
                 .addColumn(Bytes.toBytes("placeholder"), Bytes.toBytes(""), Bytes.toBytes("")));
