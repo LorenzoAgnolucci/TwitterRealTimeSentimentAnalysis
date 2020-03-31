@@ -134,7 +134,7 @@ public class PresentationLayerController implements Initializable{
                     ex.printStackTrace();
                 }
             }),
-                    new KeyFrame(Duration.seconds(3))
+                    new KeyFrame(Duration.seconds(1))
             );
             clock.setCycleCount(Animation.INDEFINITE);
             clock.play();
