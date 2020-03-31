@@ -99,7 +99,7 @@ public class TwitterSentimentAnalysisTopology{
                 .shuffleGrouping("synchronization-spout");
 
         LocalCluster cluster = new LocalCluster();
-        cluster.submitTopology("TwitterHashtagStorm", config,
+        cluster.submitTopology("TwitterSentimentAnalysisStorm", config,
                 builder.createTopology());
         Thread.sleep(1200000);
         cluster.shutdown();
