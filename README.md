@@ -36,15 +36,15 @@ Apache Storm, Hadoop and HBase installed and correctly configured in your cluste
 
 ## Usage
 
-First you have to get your personal Twitter Developers credentials and write it in a .txt file with the same structure as '''DummyTwitterCredentials'''.
+First you have to get your personal Twitter Developers credentials and write it in a .txt file with the same structure as ```DummyTwitterCredentials```.
 
 Then start Apache Storm, Hadoop and HBase in your cluster.
 
 Finally execute (in this order):
 
-* '''TwitterSentimentAnalysisTopology.java'''
-* '''PresentationLayer.java'''
-* '''HadoopDriver.java'''
+* ```TwitterSentimentAnalysisTopology.java```
+* ```PresentationLayer.java```
+* ```HadoopDriver.java```
 
 ## Authors
 
